@@ -6,15 +6,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
 <script>
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+  // 你的Firebase项目配置
+  var firebaseConfig = {
   apiKey: "AIzaSyCK8eGjZTSwydukZ0ebpDG7x69F7ICV0LU",
   authDomain: "drawing-the-lots.firebaseapp.com",
   projectId: "drawing-the-lots",
@@ -23,57 +16,57 @@ const firebaseConfig = {
   appId: "1:901584699667:web:faeaabd511a46fa5151ae6",
   measurementId: "G-SCMR50L1SF"
 };
+  // 初始化Firebase
+  firebase.initializeApp(firebaseConfig);
+  var database = firebase.database();
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-  // 从Firebase读取已抽取的组号
-  function getDrawnGroups() {
-    return database.ref('/drawnGroups').once('value').then(function(snapshot) {
-      return snapshot.val() || [];
-    });
-  }
-
-  // 将新抽取的组号保存到Firebase
-  function saveDrawnGroup(groupNumber) {
-    database.ref('/drawnGroups').push(groupNumber);
-  }
-
-  // 页面加载时获取并显示已抽取的组号
-  window.onload = function() {
-    getDrawnGroups().then(function(groups) {
-      drawnGroups = groups;
-      updateResultDisplay();
-    });
-  };
-
-  // 更新页面上显示的结果
-  function updateResultDisplay() {
-    document.getElementById('result').innerHTML = '';
-    drawnGroups.forEach(function(groupNumber, index) {
-      document.getElementById('result').innerHTML += '组号 ' + groupNumber + ' 的展示位次是：' + (index + 1) + '<br>';
-    });
-  }
-
-  // 抽取组号的逻辑
-  function drawGroup() {
-    let groupNumber = document.getElementById('groupNumber').value;
-    if(groupNumber < 1 || groupNumber > 12 || drawnGroups.includes(groupNumber)) {
-      alert('请输入一个有效的组号（1-12），且该组号尚未被抽取。');
-      return;
+  // 页面加载完成后执行的函数
+  document.addEventListener('DOMContentLoaded', function() {
+    // 从Firebase读取已抽取的组号
+    function getDrawnGroups() {
+      return database.ref('/drawnGroups').once('value').then(function(snapshot) {
+        return snapshot.val() || [];
+      });
     }
-    drawnGroups.push(groupNumber);
-    saveDrawnGroup(groupNumber);
-    updateResultDisplay();
-  }
 
-  // 重置抽取的逻辑
-  function resetDraw() {
-    database.ref('/drawnGroups').set([]);
-    drawnGroups = [];
-    updateResultDisplay();
-  }
+    // 将新抽取的组号保存到Firebase
+    function saveDrawnGroup(groupNumber) {
+      database.ref('/drawnGroups').push(groupNumber);
+    }
+
+    // 更新页面上显示的结果
+    function updateResultDisplay(drawnGroups) {
+      document.getElementById('result').innerHTML = '';
+      drawnGroups.forEach(function(groupNumber, index) {
+        document.getElementById('result').innerHTML += '组号 ' + groupNumber + ' 的展示位次是：' + (index + 1) + '<br>';
+      });
+    }
+
+    // 抽取组号的逻辑
+    window.drawGroup = function() {
+      let groupNumber = document.getElementById('groupNumber').value;
+      getDrawnGroups().then(function(drawnGroups) {
+        if(groupNumber < 1 || groupNumber > 12 || drawnGroups.includes(groupNumber)) {
+          alert('请输入一个有效的组号（1-12），且该组号尚未被抽取。');
+          return;
+        }
+        drawnGroups.push(groupNumber);
+        saveDrawnGroup(groupNumber);
+        updateResultDisplay(drawnGroups);
+      });
+    };
+
+    // 重置抽取的逻辑
+    window.resetDraw = function() {
+      database.ref('/drawnGroups').set([]);
+      updateResultDisplay([]);
+    };
+
+    // 页面加载时获取并显示已抽取的组号
+    getDrawnGroups().then(function(groups) {
+      updateResultDisplay(groups);
+    });
+  });
 </script>
 </head>
 <body>
