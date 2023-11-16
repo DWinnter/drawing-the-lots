@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>展示位次抽取</title>
+<script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+<script>
+  // 你的Firebase项目配置
+  var firebaseConfig = {
+    apiKey: "你的apiKey",
+    authDomain: "你的projectId.firebaseapp.com",
+    databaseURL: "https://你的databaseName.firebaseio.com",
+    projectId: "你的projectId",
+    storageBucket: "你的bucket.appspot.com",
+    messagingSenderId: "你的messagingSenderId",
+    appId: "你的appId"
+  };
+  // 初始化Firebase
+  firebase.initializeApp(firebaseConfig);
+  var database = firebase.database();
+
+  // 从Firebase读取已抽取的组号
+  function getDrawnGroups() {
+    return database.ref('/drawnGroups').once('value').then(function(snapshot) {
+      return snapshot.val() || [];
+    });
+  }
+
+  // 将新抽取的组号保存到Firebase
+  function saveDrawnGroup(groupNumber) {
+    database.ref('/drawnGroups').push(groupNumber);
+  }
+
+  // 页面加载时获取并显示已抽取的组号
+  window.onload = function() {
+    getDrawnGroups().then(function(groups) {
+      drawnGroups = groups;
+      updateResultDisplay();
+    });
+  };
+
+  // 更新页面上显示的结果
+  function updateResultDisplay() {
+    document.getElementById('result').innerHTML = '';
+    drawnGroups.forEach(function(groupNumber, index) {
+      document.getElementById('result').innerHTML += '组号 ' + groupNumber + ' 的展示位次是：' + (index + 1) + '<br>';
+    });
+  }
+
+  // 抽取组号的逻辑
+  function drawGroup() {
+    let groupNumber = document.getElementById('groupNumber').value;
+    if(groupNumber < 1 || groupNumber > 12 || drawnGroups.includes(groupNumber)) {
+      alert('请输入一个有效的组号（1-12），且该组号尚未被抽取。');
+      return;
+    }
+    drawnGroups.push(groupNumber);
+    saveDrawnGroup(groupNumber);
+    updateResultDisplay();
+  }
+
+  // 重置抽取的逻辑
+  function resetDraw() {
+    database.ref('/drawnGroups').set([]);
+    drawnGroups = [];
+    updateResultDisplay();
+  }
+</script>
+</head>
+<body>
+
+<h2>展示位次抽取系统</h2>
+
+<label for="groupNumber">请输入组号（1-12）：</label>
+<input type="number" id="groupNumber" min="1" max="12">
+<button onclick="drawGroup()">抽取展示位次</button>
+<button onclick="resetDraw()">重置抽取</button>
+
+<div id="result"></div>
+
+</body>
+</html>
